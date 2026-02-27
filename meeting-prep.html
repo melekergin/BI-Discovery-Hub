@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Prep · BI Discovery</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #080a0e;
+    --surface: #0f1218;
+    --surface2: #161c28;
+    --border: #1e2535;
+    --border2: #2a3348;
+    --text: #c8d4e8;
+    --muted: #64748b;
+    --muted2: #4a5568;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --vor: #6366f1;
+    --waehrend: #f59e0b;
+    --nach: #10b981;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--vor);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .phase-tabs {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .phase-tab {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 7px 16px;
+    border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.15s;
+  }
+
+  .phase-tab:hover { color: var(--text); }
+  .phase-tab.active-vor { background: rgba(99,102,241,0.15); color: var(--vor); border-color: rgba(99,102,241,0.4); }
+  .phase-tab.active-waehrend { background: rgba(245,158,11,0.15); color: var(--waehrend); border-color: rgba(245,158,11,0.4); }
+  .phase-tab.active-nach { background: rgba(16,185,129,0.15); color: var(--nach); border-color: rgba(16,185,129,0.4); }
+
+  /* PANELS */
+  .panel { display: none; flex: 1; flex-direction: column; height: calc(100vh - 53px); }
+  .panel.visible { display: flex; }
+
+  .split {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .side:first-child { border-right: 1px solid var(--border); }
+
+  .panel-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .side-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* FORM */
+  .form-group { display: flex; flex-direction: column; gap: 7px; }
+
+  label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  select, input, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    border-radius: 6px;
+    outline: none;
+    font-family: var(--sans);
+    font-size: 13px;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  select, input { padding: 9px 12px; }
+  select { cursor: pointer; }
+  select option { background: var(--surface2); }
+  textarea { padding: 12px; font-size: 13px; line-height: 1.7; resize: none; }
+
+  select:focus, input:focus, textarea:focus { border-color: var(--vor); }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    width: 100%;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-vor { background: var(--vor); color: #fff; }
+  .btn-waehrend { background: var(--waehrend); color: #fff; }
+  .btn-nach { background: var(--nach); color: #fff; }
+
+  /* OUTPUT */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--muted2);
+    opacity: 0.5;
+  }
+  .empty-icon { font-size: 32px; opacity: 0.25; }
+  .empty-state p { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; }
+
+  /* Cards */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    animation: fadeIn 0.25s ease;
+    margin-bottom: 12px;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card-header {
+    padding: 9px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-card-body {
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* Questions */
+  .question-item {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--vor);
+    border-radius: 0 6px 6px 0;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+
+  .question-item:hover { border-color: var(--vor); }
+
+  .question-item.waehrend { border-left-color: var(--waehrend); }
+  .question-item.waehrend:hover { border-color: var(--waehrend); }
+
+  .q-text { font-size: 14px; line-height: 1.5; margin-bottom: 6px; }
+
+  .q-why {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .q-copy {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .question-item:hover .q-copy { opacity: 1; }
+  .q-copy:hover { color: var(--text); }
+
+  /* Vocab */
+  .vocab-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .vocab-item {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .vocab-term {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--waehrend);
+    align-self: start;
+    padding-top: 1px;
+  }
+
+  .vocab-def { color: var(--text); line-height: 1.5; }
+
+  /* Loading */
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--vor);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* During panel – quick lookup */
+  .lookup-wrap {
+    display: flex;
+    gap: 8px;
+  }
+  .lookup-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .lookup-input:focus { border-color: var(--waehrend); }
+  .lookup-input::placeholder { color: var(--muted); font-size: 12px; }
+
+  .btn-lookup {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--waehrend);
+    color: #000;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .btn-lookup:hover { opacity: 0.85; }
+  .btn-lookup:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .quick-result {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--waehrend);
+    border-radius: 0 6px 6px 0;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    animation: fadeIn 0.2s ease;
+  }
+
+  /* Export */
+  .export-bar {
+    padding: 11px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-export {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border2);
+    padding: 7px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-export:hover { color: var(--text); border-color: var(--muted); }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .hint {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Meeting Prep · BI Discovery</div>
+  <div class="phase-tabs">
+    <button class="phase-tab active-vor" id="tab-vor" onclick="showPanel('vor')">① Vor dem Termin</button>
+    <button class="phase-tab" id="tab-waehrend" onclick="showPanel('waehrend')">② Während</button>
+    <button class="phase-tab" id="tab-nach" onclick="showPanel('nach')">③ Danach</button>
+  </div>
+</header>
+
+<!-- ① VOR DEM TERMIN -->
+<div class="panel visible" id="panel-vor">
+  <div class="split">
+    <div class="side">
+      <div class="panel-header">
+        <div class="dot" style="background:var(--vor)"></div>
+        Termin vorbereiten
+      </div>
+      <div class="side-body">
+        <div class="hint">
+          Füll das aus bevor du ins Meeting gehst. Du bekommst Fragen die du stellen kannst und Begriffe die wahrscheinlich fallen werden.
+        </div>
+
+        <div class="form-group">
+          <label>Fachbereich</label>
+          <select id="vor-bereich">
+            <option value="">— wählen —</option>
+            <option>Medizintechnik</option>
+            <option>Klinische Dienste</option>
+            <option>Infrastruktur</option>
+            <option>Finanzen / Buchhaltung</option>
+            <option>Einkauf</option>
+            <option>Personal / HR</option>
+            <option>Medizinischer Dienst</option>
+            <option>AEMP</option>
+            <option>Projektmanagement</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Thema des Termins</label>
+          <input type="text" id="vor-thema" placeholder="z.B. Detailberichtsaufnahme Wartungsaufträge">
+        </div>
+
+        <div class="form-group">
+          <label>Was weißt du schon? (optional)</label>
+          <textarea id="vor-kontext" style="min-height:80px" placeholder="z.B. Es geht um offene Aufträge, Controlling und Werkstatt haben unterschiedliche Zahlen..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Was möchtest du verstehen?</label>
+          <textarea id="vor-ziel" style="min-height:70px" placeholder="z.B. Wie wird die KPI berechnet? Was bedeutet 'abgeschlossen' für sie?"></textarea>
+        </div>
+
+        <button class="btn btn-vor" id="btn-vor" onclick="prepareVor()">Vorbereitung generieren →</button>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="panel-header">
+        <div class="dot" style="background:var(--vor)"></div>
+        Deine Vorbereitung
+      </div>
+      <div class="side-body" id="vor-output">
+        <div class="empty-state">
+          <div class="empty-icon">◈</div>
+          <p>Termin ausfüllen und vorbereiten</p>
+        </div>
+      </div>
+      <div class="export-bar" id="vor-export" style="display:none">
+        <button class="btn-export" onclick="exportVor()">↓ Markdown</button>
+        <button class="btn-export" onclick="copyVor()">⎘ Kopieren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ② WÄHREND -->
+<div class="panel" id="panel-waehrend">
+  <div class="split">
+    <div class="side">
+      <div class="panel-header">
+        <div class="dot" style="background:var(--waehrend)"></div>
+        Begriff schnell nachschlagen
+      </div>
+      <div class="side-body">
+        <div class="hint">
+          Jemand sagt etwas das du nicht kennst? Einfach hier eintippen – auch phonetisch. Du bekommst sofort eine kurze Erklärung.
+        </div>
+
+        <div class="form-group">
+          <label>Aktueller Fachbereich</label>
+          <select id="waehrend-bereich">
+            <option value="">— wählen —</option>
+            <option>Medizintechnik</option>
+            <option>Klinische Dienste</option>
+            <option>Infrastruktur</option>
+            <option>Finanzen / Buchhaltung</option>
+            <option>Einkauf</option>
+            <option>Personal / HR</option>
+            <option>Medizinischer Dienst</option>
+            <option>AEMP</option>
+            <option>Projektmanagement</option>
+          </select>
+        </div>
+
+        <div class="lookup-wrap">
+          <input class="lookup-input" id="waehrend-input"
+            placeholder="Begriff eingeben, z.B. 'IW38' oder 'Instanhaltungsauftrag'..."
+            onkeydown="if(event.key==='Enter') lookupTerm()">
+          <button class="btn-lookup" id="btn-lookup" onclick="lookupTerm()">→</button>
+        </div>
+
+        <div id="waehrend-results" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+        <!-- Quick questions during meeting -->
+        <div style="margin-top:16px">
+          <div class="form-group">
+            <label>Oder: Frage formulieren helfen</label>
+            <textarea id="waehrend-frage-input" style="min-height:70px"
+              placeholder="Was du fragen möchtest aber nicht weißt wie... z.B. 'Ich verstehe nicht warum die Zahl anders ist als bei uns'"></textarea>
+          </div>
+          <button class="btn btn-waehrend" style="margin-top:8px" id="btn-frage" onclick="formulateFrage()">
+            Frage formulieren →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="panel-header">
+        <div class="dot" style="background:var(--waehrend)"></div>
+        Erklärungen & Fragen
+      </div>
+      <div class="side-body" id="waehrend-output">
+        <div class="empty-state">
+          <div class="empty-icon">◈</div>
+          <p>Begriff eingeben oder Frage formulieren</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ③ NACH DEM TERMIN -->
+<div class="panel" id="panel-nach">
+  <div class="split">
+    <div class="side">
+      <div class="panel-header">
+        <div class="dot" style="background:var(--nach)"></div>
+        Nachbereitung
+      </div>
+      <div class="side-body">
+        <div class="hint">
+          Unklare Begriffe oder Aussagen aus dem Meeting hier einfügen. AI erklärt was gemeint war und was du als nächstes tun kannst.
+        </div>
+
+        <div class="form-group">
+          <label>Fachbereich</label>
+          <select id="nach-bereich">
+            <option value="">— wählen —</option>
+            <option>Medizintechnik</option>
+            <option>Klinische Dienste</option>
+            <option>Infrastruktur</option>
+            <option>Finanzen / Buchhaltung</option>
+            <option>Einkauf</option>
+            <option>Personal / HR</option>
+            <option>Medizinischer Dienst</option>
+            <option>AEMP</option>
+            <option>Projektmanagement</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Was war unklar oder hast du nicht verstanden?</label>
+          <textarea id="nach-unklar" style="min-height:120px"
+            placeholder="z.B.&#10;- 'Belegungsrate nach DRG' – was ist DRG?&#10;- Jemand hat von 'PM-Meldung vs Auftrag' gesprochen&#10;- Die Zahl 94% – woher kommt die?&#10;- IW38 mit Selektion auf IDAT2 – was bedeutet das?"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Was hast du zugesagt oder willst du prüfen?</label>
+          <textarea id="nach-zusagen" style="min-height:70px"
+            placeholder="z.B. 'Ich schaue nach warum die Zahlen abweichen'"></textarea>
+        </div>
+
+        <button class="btn btn-nach" id="btn-nach" onclick="prepareNach()">Nachbereitung generieren →</button>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="panel-header">
+        <div class="dot" style="background:var(--nach)"></div>
+        Erklärungen & nächste Schritte
+      </div>
+      <div class="side-body" id="nach-output">
+        <div class="empty-state">
+          <div class="empty-icon">◈</div>
+          <p>Unklares einfügen und aufbereiten</p>
+        </div>
+      </div>
+      <div class="export-bar" id="nach-export" style="display:none">
+        <button class="btn-export" onclick="exportNach()">↓ Markdown</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let vorResult = null;
+let nachResult = null;
+
+// ─── TABS ──────────────────────────────────────────────────────────────────
+function showPanel(name) {
+  ['vor','waehrend','nach'].forEach(p => {
+    document.getElementById('panel-' + p).classList.remove('visible');
+    document.getElementById('tab-' + p).className = 'phase-tab';
+  });
+  document.getElementById('panel-' + name).classList.add('visible');
+  document.getElementById('tab-' + name).classList.add('active-' + name);
+}
+
+// ─── VOR DEM TERMIN ────────────────────────────────────────────────────────
+async function prepareVor() {
+  const bereich = document.getElementById('vor-bereich').value;
+  const thema = document.getElementById('vor-thema').value.trim();
+  const kontext = document.getElementById('vor-kontext').value.trim();
+  const ziel = document.getElementById('vor-ziel').value.trim();
+
+  if (!thema) { alert('Bitte Thema eingeben.'); return; }
+
+  const btn = document.getElementById('btn-vor');
+  btn.disabled = true; btn.textContent = 'Vorbereite...';
+
+  document.getElementById('vor-output').innerHTML = `<div class="loading"><div class="spinner"></div><span>Vorbereitung wird generiert...</span></div>`;
+  document.getElementById('vor-export').style.display = 'none';
+
+  const prompt = `Du bist Mentor für eine BI-Entwicklerin (Junior, nicht deutsche Muttersprachlerin) die ein Meeting mit dem Fachbereich hat.
+Sie ist schüchtern in Meetings und möchte sich gut vorbereiten.
+Sei praktisch, ermutigend, kein Fachjargon ohne Erklärung.
+
+BEREICH: ${bereich || 'Unbekannt'}
+THEMA: ${thema}
+${kontext ? `KONTEXT: ${kontext}` : ''}
+${ziel ? `ZIEL: ${ziel}` : ''}
+
+Antworte NUR als valides JSON:
+{
+  "zusammenfassung": "In 2-3 Sätzen: Worum geht es in diesem Meeting wahrscheinlich?",
+  "fragen": [
+    {
+      "frage": "Konkrete Frage die sie stellen kann – einfaches klares Deutsch",
+      "warum": "Warum ist diese Frage gut / was erfährt sie damit?",
+      "wann": "Wann im Meeting passt diese Frage? z.B. 'Am Anfang' oder 'Wenn über KPIs gesprochen wird'"
+    }
+  ],
+  "vokabular": [
+    { "term": "Fachbegriff", "erklaerung": "Einfache Erklärung in 1 Satz" }
+  ],
+  "tipp": "Ein konkreter persönlicher Tipp für dieses Meeting"
+}
+Maximal 3 Fragen. Maximal 6 Vokabular-Einträge. Fragen sollen einfach sein – keine Expertenfragen.`;
+
+  try {
+    const r = await callAI(prompt);
+    vorResult = { bereich, thema, result: r };
+    renderVor(r);
+  } catch(e) {
+    document.getElementById('vor-output').innerHTML =
+      `<div style="color:#f06060;font-family:var(--mono);font-size:12px;padding:16px;">Fehler: ${e.message}</div>`;
+  }
+  btn.disabled = false; btn.textContent = 'Vorbereitung generieren →';
+}
+
+function renderVor(r) {
+  const fragen = (r.fragen || []).map((f, i) => `
+    <div class="question-item">
+      <button class="q-copy" onclick="navigator.clipboard.writeText('${f.frage.replace(/'/g,"\\'")}')">⎘</button>
+      <div class="q-text">${f.frage}</div>
+      <div class="q-why">→ ${f.warum}</div>
+      <div style="margin-top:4px;font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.08em">${f.wann || ''}</div>
+    </div>
+  `).join('');
+
+  const vocab = (r.vokabular || []).map(v => `
+    <div class="vocab-item">
+      <div class="vocab-term">${v.term}</div>
+      <div class="vocab-def">${v.erklaerung}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('vor-output').innerHTML = `
+    <div class="result-card">
+      <div class="result-card-header">◈ Worum geht es</div>
+      <div class="result-card-body">${r.zusammenfassung}</div>
+    </div>
+
+    <div class="result-card">
+      <div class="result-card-header">→ Fragen die du stellen kannst</div>
+      <div class="result-card-body">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;font-family:var(--mono)">
+          Klick auf ⎘ um eine Frage zu kopieren. Du musst nicht alle stellen – eine reicht.
+        </div>
+        ${fragen}
+      </div>
+    </div>
+
+    ${vocab ? `<div class="result-card">
+      <div class="result-card-header">◎ Begriffe die wahrscheinlich fallen</div>
+      <div class="result-card-body">
+        <div class="vocab-grid">${vocab}</div>
+      </div>
+    </div>` : ''}
+
+    ${r.tipp ? `<div class="result-card" style="border-color:rgba(99,102,241,0.3)">
+      <div class="result-card-header" style="color:var(--vor)">✦ Persönlicher Tipp</div>
+      <div class="result-card-body" style="font-size:14px;line-height:1.8">${r.tipp}</div>
+    </div>` : ''}
+  `;
+  document.getElementById('vor-export').style.display = 'flex';
+}
+
+// ─── WÄHREND ───────────────────────────────────────────────────────────────
+async function lookupTerm() {
+  const term = document.getElementById('waehrend-input').value.trim();
+  const bereich = document.getElementById('waehrend-bereich').value;
+  if (!term) return;
+
+  const btn = document.getElementById('btn-lookup');
+  btn.disabled = true;
+
+  const prompt = `Du bist SAP/BI-Experte im Krankenhaus. Erkläre diesen Begriff kurz und einfach auf Deutsch.
+BEREICH: ${bereich || 'Krankenhaus allgemein'}
+BEGRIFF: ${term}
+
+Antworte NUR als JSON:
+{
+  "erklaerung": "1-2 Sätze einfache Erklärung",
+  "beispiel": "Konkretes Beispiel aus dem Krankenhaus (optional, kurz)"
+}`;
+
+  try {
+    const r = await callAI(prompt);
+    const results = document.getElementById('waehrend-results');
+    const div = document.createElement('div');
+    div.className = 'quick-result';
+    div.innerHTML = `<strong style="font-family:var(--mono);font-size:11px;color:var(--waehrend)">${term}</strong><br>${r.erklaerung}${r.beispiel ? `<br><span style="color:var(--muted);font-size:12px">z.B. ${r.beispiel}</span>` : ''}`;
+    results.insertBefore(div, results.firstChild);
+    document.getElementById('waehrend-output').querySelector('.empty-state') &&
+      (document.getElementById('waehrend-output').innerHTML = '');
+    document.getElementById('waehrend-output').prepend(div.cloneNode(true));
+    document.getElementById('waehrend-input').value = '';
+  } catch(e) {}
+  btn.disabled = false;
+}
+
+async function formulateFrage() {
+  const input = document.getElementById('waehrend-frage-input').value.trim();
+  const bereich = document.getElementById('waehrend-bereich').value;
+  if (!input) return;
+
+  const btn = document.getElementById('btn-frage');
+  btn.disabled = true; btn.textContent = 'Formuliere...';
+
+  const prompt = `Du hilfst einer BI-Entwicklerin (Junior, nicht Muttersprachlerin Deutsch) eine professionelle Frage zu formulieren.
+Sie möchte fragen: "${input}"
+BEREICH: ${bereich}
+
+Formuliere 2 Versionen auf einfachem, klarem Deutsch:
+- Version 1: direkt und kurz
+- Version 2: etwas höflicher / indirekter
+
+Antworte NUR als JSON:
+{
+  "direkt": "Direkte Version der Frage",
+  "hoeflich": "Höflichere Version der Frage"
+}`;
+
+  try {
+    const r = await callAI(prompt);
+    const out = document.getElementById('waehrend-output');
+    if (out.querySelector('.empty-state')) out.innerHTML = '';
+
+    const div = document.createElement('div');
+    div.className = 'result-card';
+    div.style.animation = 'fadeIn 0.25s ease';
+    div.innerHTML = `
+      <div class="result-card-header">→ Formulierte Fragen</div>
+      <div class="result-card-body">
+        <div class="question-item waehrend" style="margin-bottom:8px">
+          <button class="q-copy" onclick="navigator.clipboard.writeText('${r.direkt.replace(/'/g,"\\'")}')">⎘</button>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--waehrend);margin-bottom:4px">DIREKT</div>
+          <div class="q-text">${r.direkt}</div>
+        </div>
+        <div class="question-item waehrend">
+          <button class="q-copy" onclick="navigator.clipboard.writeText('${r.hoeflich.replace(/'/g,"\\'")}')">⎘</button>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--waehrend);margin-bottom:4px">HÖFLICHER</div>
+          <div class="q-text">${r.hoeflich}</div>
+        </div>
+      </div>`;
+    out.prepend(div);
+    document.getElementById('waehrend-frage-input').value = '';
+  } catch(e) {}
+  btn.disabled = false; btn.textContent = 'Frage formulieren →';
+}
+
+// ─── NACH DEM TERMIN ───────────────────────────────────────────────────────
+async function prepareNach() {
+  const bereich = document.getElementById('nach-bereich').value;
+  const unklar = document.getElementById('nach-unklar').value.trim();
+  const zusagen = document.getElementById('nach-zusagen').value.trim();
+
+  if (!unklar) { alert('Bitte unklare Punkte eingeben.'); return; }
+
+  const btn = document.getElementById('btn-nach');
+  btn.disabled = true; btn.textContent = 'Aufbereite...';
+  document.getElementById('nach-output').innerHTML = `<div class="loading"><div class="spinner"></div><span>Wird aufbereitet...</span></div>`;
+
+  const prompt = `Du bist Mentor für eine BI-Entwicklerin nach einem Fachbereich-Meeting.
+Erkläre die unklaren Punkte einfach und hilf ihr mit nächsten Schritten.
+
+BEREICH: ${bereich || 'Unbekannt'}
+UNKLAR: ${unklar}
+${zusagen ? `ZUGESAGT / ZU PRÜFEN: ${zusagen}` : ''}
+
+Antworte NUR als JSON:
+{
+  "erklaerungen": [
+    { "begriff": "Begriff oder Aussage", "erklaerung": "Was es bedeutet", "sap_relevanz": "Falls SAP relevant: welche Transaktion oder Tabelle" }
+  ],
+  "naechste_schritte": [
+    { "schritt": "Was zu tun ist", "wie": "Kurze Anleitung wie" }
+  ],
+  "fuer_naechstes_meeting": ["Frage oder Punkt für das nächste Gespräch"]
+}
+Maximal 4 nächste Schritte. Maximal 3 Fragen für nächstes Meeting.`;
+
+  try {
+    const r = await callAI(prompt);
+    nachResult = { bereich, result: r };
+    renderNach(r);
+  } catch(e) {
+    document.getElementById('nach-output').innerHTML =
+      `<div style="color:#f06060;font-family:var(--mono);font-size:12px;padding:16px;">Fehler: ${e.message}</div>`;
+  }
+  btn.disabled = false; btn.textContent = 'Nachbereitung generieren →';
+}
+
+function renderNach(r) {
+  const erkl = (r.erklaerungen || []).map(e => `
+    <div class="vocab-item" style="grid-template-columns:1fr">
+      <div style="margin-bottom:6px">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--nach)">${e.begriff}</span>
+        ${e.sap_relevanz ? `<span style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:8px">${e.sap_relevanz}</span>` : ''}
+      </div>
+      <div style="font-size:13px;line-height:1.6">${e.erklaerung}</div>
+    </div>
+  `).join('');
+
+  const schritte = (r.naechste_schritte || []).map((s, i) => `
+    <div class="question-item" style="border-left-color:var(--nach)">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--nach);margin-bottom:4px">SCHRITT ${i+1}</div>
+      <div class="q-text">${s.schritt}</div>
+      ${s.wie ? `<div class="q-why">→ ${s.wie}</div>` : ''}
+    </div>
+  `).join('');
+
+  const naechste = (r.fuer_naechstes_meeting || []).map(f => `
+    <div class="question-item" style="border-left-color:var(--muted)">
+      <div class="q-text">${f}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('nach-output').innerHTML = `
+    ${erkl ? `<div class="result-card">
+      <div class="result-card-header">◈ Erklärungen</div>
+      <div class="result-card-body"><div class="vocab-grid">${erkl}</div></div>
+    </div>` : ''}
+
+    ${schritte ? `<div class="result-card">
+      <div class="result-card-header">✓ Nächste Schritte</div>
+      <div class="result-card-body">${schritte}</div>
+    </div>` : ''}
+
+    ${naechste ? `<div class="result-card">
+      <div class="result-card-header">→ Für nächstes Meeting</div>
+      <div class="result-card-body">${naechste}</div>
+    </div>` : ''}
+  `;
+  document.getElementById('nach-export').style.display = 'flex';
+}
+
+// ─── AI HELPER ─────────────────────────────────────────────────────────────
+async function callAI(prompt) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await response.json();
+  const text = data.content?.[0]?.text || '';
+  return JSON.parse(text.replace(/```json|```/g, '').trim());
+}
+
+// ─── EXPORT ────────────────────────────────────────────────────────────────
+function exportVor() {
+  if (!vorResult) return;
+  const r = vorResult.result;
+  const md = `# Meeting Vorbereitung: ${vorResult.bereich} – ${vorResult.thema}
+
+## Worum geht es
+${r.zusammenfassung}
+
+## Fragen die ich stellen kann
+${(r.fragen||[]).map((f,i) => `${i+1}. **${f.frage}**\n   → ${f.warum}\n   _${f.wann}_`).join('\n\n')}
+
+## Begriffe
+${(r.vokabular||[]).map(v => `- **${v.term}**: ${v.erklaerung}`).join('\n')}
+
+## Tipp
+${r.tipp || '—'}
+`;
+  download(md, `vorbereitung-${vorResult.bereich||'meeting'}.md`);
+}
+
+function exportNach() {
+  if (!nachResult) return;
+  const r = nachResult.result;
+  const md = `# Nachbereitung: ${nachResult.bereich}
+
+## Erklärungen
+${(r.erklaerungen||[]).map(e => `- **${e.begriff}**: ${e.erklaerung}${e.sap_relevanz ? ` _(${e.sap_relevanz})_` : ''}`).join('\n')}
+
+## Nächste Schritte
+${(r.naechste_schritte||[]).map((s,i) => `- [ ] ${s.schritt}\n  → ${s.wie}`).join('\n')}
+
+## Für nächstes Meeting
+${(r.fuer_naechstes_meeting||[]).map(f => `- ${f}`).join('\n')}
+`;
+  download(md, `nachbereitung-${nachResult.bereich||'meeting'}.md`);
+}
+
+function copyVor() {
+  if (!vorResult) return;
+  const r = vorResult.result;
+  navigator.clipboard.writeText(
+    (r.fragen||[]).map((f,i) => `${i+1}. ${f.frage}`).join('\n')
+  );
+}
+
+function download(content, filename) {
+  const blob = new Blob([content], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+}
+</script>
+</body>
+</html>
