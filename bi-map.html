@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BI Knowledge Map</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #080a0e;
+    --surface: #0f1218;
+    --surface2: #161c28;
+    --border: #1e2535;
+    --border2: #2a3348;
+    --text: #c8d4e8;
+    --muted: #4a5568;
+    --muted2: #64748b;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+
+    --bereich: #3b82f6;
+    --prozess: #8b5cf6;
+    --kpi: #10b981;
+    --tabelle: #f59e0b;
+    --confluenz: #ec4899;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--bereich);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    margin-left: auto;
+    align-items: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.08em;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .btn-add {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    background: var(--bereich);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+
+  .btn-clear-map {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    background: transparent;
+    color: var(--muted2);
+    border: 1px solid var(--border2);
+    padding: 7px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-clear-map:hover { color: var(--text); border-color: var(--muted2); }
+
+  /* LAYOUT */
+  .workspace {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* CANVAS */
+  #canvas {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+  }
+  #canvas.grabbing { cursor: grabbing; }
+
+  #graphContainer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+
+  svg#edges {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  /* NODES */
+  .node {
+    position: absolute;
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: box-shadow 0.2s, transform 0.15s;
+    border: 1px solid transparent;
+    min-width: 130px;
+    max-width: 200px;
+  }
+
+  .node:hover {
+    transform: translateY(-2px);
+    z-index: 100;
+  }
+
+  .node.selected {
+    z-index: 200;
+  }
+
+  .node-type {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+
+  .node-label {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  .node-bereich {
+    background: rgba(59,130,246,0.12);
+    border-color: rgba(59,130,246,0.4);
+    box-shadow: 0 0 20px rgba(59,130,246,0.08);
+  }
+  .node-bereich .node-type { color: var(--bereich); }
+  .node-bereich:hover, .node-bereich.selected {
+    box-shadow: 0 0 30px rgba(59,130,246,0.2);
+    border-color: var(--bereich);
+  }
+
+  .node-prozess {
+    background: rgba(139,92,246,0.12);
+    border-color: rgba(139,92,246,0.4);
+    box-shadow: 0 0 20px rgba(139,92,246,0.08);
+  }
+  .node-prozess .node-type { color: var(--prozess); }
+  .node-prozess:hover, .node-prozess.selected {
+    box-shadow: 0 0 30px rgba(139,92,246,0.2);
+    border-color: var(--prozess);
+  }
+
+  .node-kpi {
+    background: rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.4);
+    box-shadow: 0 0 20px rgba(16,185,129,0.06);
+  }
+  .node-kpi .node-type { color: var(--kpi); }
+  .node-kpi:hover, .node-kpi.selected {
+    box-shadow: 0 0 30px rgba(16,185,129,0.2);
+    border-color: var(--kpi);
+  }
+
+  .node-tabelle {
+    background: rgba(245,158,11,0.1);
+    border-color: rgba(245,158,11,0.35);
+    box-shadow: 0 0 20px rgba(245,158,11,0.06);
+  }
+  .node-tabelle .node-type { color: var(--tabelle); }
+  .node-tabelle:hover, .node-tabelle.selected {
+    box-shadow: 0 0 30px rgba(245,158,11,0.2);
+    border-color: var(--tabelle);
+  }
+
+  .node-confluenz {
+    background: rgba(236,72,153,0.1);
+    border-color: rgba(236,72,153,0.35);
+  }
+  .node-confluenz .node-type { color: var(--confluenz); }
+  .node-confluenz:hover, .node-confluenz.selected {
+    box-shadow: 0 0 30px rgba(236,72,153,0.2);
+    border-color: var(--confluenz);
+  }
+
+  /* EDGES */
+  .edge-line {
+    stroke: var(--border2);
+    stroke-width: 1.5;
+    fill: none;
+    opacity: 0.6;
+    transition: opacity 0.2s, stroke 0.2s;
+  }
+  .edge-line.highlighted {
+    opacity: 1;
+    stroke-width: 2;
+  }
+
+  /* DETAIL PANEL */
+  .detail-panel {
+    width: 300px;
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+  }
+  .detail-panel.open { transform: translateX(0); }
+
+  .detail-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .detail-type {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    color: var(--muted2);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px;
+  }
+  .btn-close:hover { color: var(--text); }
+
+  .detail-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .detail-title {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .detail-section-content {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .connected-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .connected-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--surface2);
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: border-color 0.15s;
+    font-size: 12px;
+  }
+  .connected-item:hover { border-color: var(--border2); }
+
+  .connected-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* INPUT MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    width: 560px;
+    max-width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+  }
+
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .form-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .form-select, .form-textarea, .form-input {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    border-radius: 6px;
+    outline: none;
+    font-family: var(--sans);
+    font-size: 13px;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .form-select:focus, .form-textarea:focus, .form-input:focus {
+    border-color: var(--bereich);
+  }
+  .form-select { padding: 9px 12px; cursor: pointer; }
+  .form-select option { background: var(--surface2); }
+  .form-input { padding: 9px 12px; }
+  .form-textarea {
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .btn-modal-cancel {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: transparent;
+    color: var(--muted2);
+    border: 1px solid var(--border2);
+    padding: 9px 18px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .btn-modal-cancel:hover { color: var(--text); }
+
+  .btn-modal-ok {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bereich);
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-modal-ok:hover { opacity: 0.85; }
+  .btn-modal-ok:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .analyzing-hint {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--kpi);
+    letter-spacing: 0.08em;
+    animation: pulse 1.5s ease-in-out infinite;
+    display: none;
+  }
+  .analyzing-hint.visible { display: block; }
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  /* empty canvas hint */
+  .canvas-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .canvas-hint-icon {
+    font-size: 48px;
+    opacity: 0.15;
+  }
+
+  .canvas-hint p {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    opacity: 0.4;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BI // Knowledge Map</div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--bereich)"></div>Bereich</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--prozess)"></div>Prozess</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--kpi)"></div>KPI</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--tabelle)"></div>Tabelle</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--confluenz)"></div>Confluence</div>
+  </div>
+
+  <button class="btn-clear-map" onclick="clearMap()">Karte leeren</button>
+  <button class="btn-add" onclick="openModal()">+ Hinzufügen</button>
+</header>
+
+<div class="workspace">
+  <div id="canvas">
+    <div id="graphContainer">
+      <svg id="edges"></svg>
+    </div>
+    <div class="canvas-hint" id="canvasHint">
+      <div class="canvas-hint-icon">◈</div>
+      <p>Klicke auf "+ Hinzufügen" um zu starten</p>
+      <p>SQL, Confluence-Text oder Prozessbeschreibung einfügen</p>
+    </div>
+  </div>
+
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+      <div class="detail-type" id="detailType"></div>
+      <button class="btn-close" onclick="closeDetail()">×</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Neuer Eintrag</div>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Typ des Inhalts</label>
+        <select class="form-select" id="inputType">
+          <option value="auto">Automatisch erkennen (empfohlen)</option>
+          <option value="sql">SQL / Code</option>
+          <option value="confluence">Confluence / Dokumentation</option>
+          <option value="prozess">Prozessbeschreibung</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bereich</label>
+        <select class="form-select" id="inputBereich">
+          <option value="">— Bereich wählen —</option>
+          <option>Medizintechnik</option>
+          <option>Klinische Dienste</option>
+          <option>Infrastruktur</option>
+          <option>Finanzen / Buchhaltung</option>
+          <option>Einkauf</option>
+          <option>Personal / HR</option>
+          <option>Medizinischer Dienst</option>
+          <option>AEMP</option>
+          <option>Projektmanagement</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Inhalt einfügen</label>
+        <textarea class="form-textarea" id="inputContent" placeholder="SQL, Confluence-Text, Prozessbeschreibung – einfach einfügen..."></textarea>
+      </div>
+      <div class="analyzing-hint" id="analyzingHint">⟳ AI analysiert und extrahiert Knoten...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-modal-ok" id="btnAnalyze" onclick="analyzeAndAdd()">Analysieren & zur Karte hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let nodes = [];
+let edges = [];
+let selectedNode = null;
+let nodeIdCounter = 0;
+
+// Canvas pan
+let isPanning = false;
+let panStart = { x: 0, y: 0 };
+let panOffset = { x: 0, y: 0 };
+let panCurrent = { x: 0, y: 0 };
+
+// Node drag
+let isDragging = false;
+let dragNode = null;
+let dragStart = { x: 0, y: 0 };
+let dragNodeStart = { x: 0, y: 0 };
+
+// ─── COLORS ──────────────────────────────────────────────────────────────────
+const TYPE_COLORS = {
+  bereich: '#3b82f6',
+  prozess: '#8b5cf6',
+  kpi: '#10b981',
+  tabelle: '#f59e0b',
+  confluenz: '#ec4899'
+};
+
+const TYPE_LABELS = {
+  bereich: 'Bereich',
+  prozess: 'Prozess',
+  kpi: 'KPI',
+  tabelle: 'Tabelle',
+  confluenz: 'Confluence'
+};
+
+// ─── LOAD / SAVE ─────────────────────────────────────────────────────────────
+async function saveState() {
+  try {
+    await window.storage.set('bi-map-nodes', JSON.stringify(nodes));
+    await window.storage.set('bi-map-edges', JSON.stringify(edges));
+    await window.storage.set('bi-map-counter', String(nodeIdCounter));
+  } catch(e) {}
+}
+
+async function loadState() {
+  try {
+    const n = await window.storage.get('bi-map-nodes');
+    const e = await window.storage.get('bi-map-edges');
+    const c = await window.storage.get('bi-map-counter');
+    if (n) nodes = JSON.parse(n.value);
+    if (e) edges = JSON.parse(e.value);
+    if (c) nodeIdCounter = parseInt(c.value) || 0;
+    renderAll();
+  } catch(e) {
+    renderAll();
+  }
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('inputContent').focus();
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('inputContent').value = '';
+  document.getElementById('inputBereich').value = '';
+  document.getElementById('inputType').value = 'auto';
+  document.getElementById('analyzingHint').classList.remove('visible');
+  document.getElementById('btnAnalyze').disabled = false;
+  document.getElementById('btnAnalyze').textContent = 'Analysieren & zur Karte hinzufügen';
+}
+
+// ─── AI ANALYSIS ─────────────────────────────────────────────────────────────
+async function analyzeAndAdd() {
+  const content = document.getElementById('inputContent').value.trim();
+  const bereich = document.getElementById('inputBereich').value;
+  const typ = document.getElementById('inputType').value;
+
+  if (!content) { alert('Bitte Inhalt einfügen.'); return; }
+
+  const btn = document.getElementById('btnAnalyze');
+  btn.disabled = true;
+  btn.textContent = 'Analysiere...';
+  document.getElementById('analyzingHint').classList.add('visible');
+
+  const prompt = `Du bist BI-Analyst in einem Krankenhaus. Analysiere folgenden Inhalt und extrahiere daraus Knoten für eine Wissensgraph-Karte.
+
+BEREICH: ${bereich || 'Unbekannt'}
+TYP-HINWEIS: ${typ}
+INHALT:
+${content.substring(0, 3000)}
+
+Antworte NUR als valides JSON-Array von Knoten. Kein Text davor/danach, kein Markdown.
+Extrahiere maximal 8 Knoten. Jeder Knoten hat:
+- id: einzigartige kurze ID (z.B. "n1", "n2")
+- type: einer von: "bereich", "prozess", "kpi", "tabelle", "confluenz"
+- label: kurzer Name (max 30 Zeichen)
+- beschreibung: 1-2 Sätze was es ist/bedeutet
+- bereich: der Fachbereich
+
+Dann ein "edges" Array mit Verbindungen:
+- from: node id
+- to: node id
+- label: kurze Beschreibung der Beziehung (z.B. "verwendet", "berechnet", "gehört zu")
+
+Antworte mit:
+{"nodes": [...], "edges": [...]}
+
+Regeln:
+- Immer einen Bereich-Knoten erstellen wenn klar
+- SQL-Tabellen als "tabelle" extrahieren
+- KPIs/Kennzahlen als "kpi"
+- Prozesse/Workflows als "prozess"
+- Confluence-Inhalte als "confluenz"
+- Verbinde logisch was zusammengehört`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    addNodesToMap(result.nodes || [], result.edges || [], bereich);
+    closeModal();
+
+  } catch(e) {
+    alert('Fehler: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Analysieren & zur Karte hinzufügen';
+    document.getElementById('analyzingHint').classList.remove('visible');
+  }
+}
+
+// ─── ADD NODES ───────────────────────────────────────────────────────────────
+function addNodesToMap(newNodes, newEdges, bereich) {
+  const canvas = document.getElementById('canvas');
+  const cw = canvas.offsetWidth;
+  const ch = canvas.offsetHeight;
+
+  // Map temp ids to real ids, check for existing nodes (dedup by label+type)
+  const idMap = {};
+
+  newNodes.forEach((n, i) => {
+    // Check if node already exists
+    const existing = nodes.find(e =>
+      e.label.toLowerCase() === n.label.toLowerCase() && e.type === n.type
+    );
+
+    if (existing) {
+      idMap[n.id] = existing.id;
+      return;
+    }
+
+    const realId = 'node_' + (++nodeIdCounter);
+    idMap[n.id] = realId;
+
+    // Position: spread in center area
+    const angle = (i / Math.max(newNodes.length, 1)) * Math.PI * 2;
+    const radius = 160;
+    const cx = cw / 2 - panOffset.x;
+    const cy = ch / 2 - panOffset.y;
+
+    nodes.push({
+      id: realId,
+      type: n.type,
+      label: n.label,
+      beschreibung: n.beschreibung,
+      bereich: n.bereich || bereich,
+      x: cx + Math.cos(angle) * radius,
+      y: cy + Math.sin(angle) * radius
+    });
+  });
+
+  // Add edges (avoid duplicates)
+  newEdges.forEach(e => {
+    const fromId = idMap[e.from];
+    const toId = idMap[e.to];
+    if (!fromId || !toId) return;
+    const exists = edges.find(ex =>
+      (ex.from === fromId && ex.to === toId) ||
+      (ex.from === toId && ex.to === fromId)
+    );
+    if (!exists) {
+      edges.push({ from: fromId, to: toId, label: e.label || '' });
+    }
+  });
+
+  renderAll();
+  saveState();
+  document.getElementById('canvasHint').style.display = 'none';
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderNodes();
+  renderEdges();
+  if (nodes.length > 0) {
+    document.getElementById('canvasHint').style.display = 'none';
+  }
+}
+
+function renderNodes() {
+  const container = document.getElementById('graphContainer');
+  // Remove old node elements
+  container.querySelectorAll('.node').forEach(el => el.remove());
+
+  nodes.forEach(node => {
+    const el = document.createElement('div');
+    el.className = `node node-${node.type}`;
+    el.id = 'el_' + node.id;
+    el.style.left = (node.x + panOffset.x) + 'px';
+    el.style.top = (node.y + panOffset.y) + 'px';
+    if (selectedNode && selectedNode.id === node.id) el.classList.add('selected');
+
+    el.innerHTML = `
+      <div class="node-type">${TYPE_LABELS[node.type] || node.type}</div>
+      <div class="node-label">${node.label}</div>
+    `;
+
+    el.addEventListener('mousedown', (e) => startDrag(e, node));
+    el.addEventListener('click', (e) => { e.stopPropagation(); selectNode(node); });
+
+    container.appendChild(el);
+  });
+}
+
+function renderEdges() {
+  const svg = document.getElementById('edges');
+  svg.innerHTML = '';
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+  marker.setAttribute('id', 'arrow');
+  marker.setAttribute('markerWidth', '8');
+  marker.setAttribute('markerHeight', '8');
+  marker.setAttribute('refX', '6');
+  marker.setAttribute('refY', '3');
+  marker.setAttribute('orient', 'auto');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', 'M0,0 L0,6 L8,3 z');
+  path.setAttribute('fill', '#2a3348');
+  marker.appendChild(path);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  edges.forEach(edge => {
+    const fromNode = nodes.find(n => n.id === edge.from);
+    const toNode = nodes.find(n => n.id === edge.to);
+    if (!fromNode || !toNode) return;
+
+    const fx = fromNode.x + panOffset.x + 90;
+    const fy = fromNode.y + panOffset.y + 30;
+    const tx = toNode.x + panOffset.x + 90;
+    const ty = toNode.y + panOffset.y + 30;
+
+    const highlighted = selectedNode &&
+      (selectedNode.id === edge.from || selectedNode.id === edge.to);
+
+    const cx = (fx + tx) / 2;
+    const cy = (fy + ty) / 2 - 30;
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('d', `M${fx},${fy} Q${cx},${cy} ${tx},${ty}`);
+    line.setAttribute('class', 'edge-line' + (highlighted ? ' highlighted' : ''));
+    if (highlighted) {
+      const fromColor = TYPE_COLORS[fromNode.type] || '#2a3348';
+      line.setAttribute('stroke', fromColor);
+      line.setAttribute('opacity', '0.6');
+    }
+    line.setAttribute('marker-end', 'url(#arrow)');
+    svg.appendChild(line);
+
+    // Edge label
+    if (edge.label && highlighted) {
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', cx);
+      text.setAttribute('y', cy - 6);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', '#64748b');
+      text.setAttribute('font-size', '10');
+      text.setAttribute('font-family', 'IBM Plex Mono, monospace');
+      text.textContent = edge.label;
+      svg.appendChild(text);
+    }
+  });
+}
+
+// ─── SELECTION & DETAIL ───────────────────────────────────────────────────────
+function selectNode(node) {
+  selectedNode = node;
+  renderAll();
+  openDetail(node);
+}
+
+function openDetail(node) {
+  const panel = document.getElementById('detailPanel');
+  const typeEl = document.getElementById('detailType');
+  const bodyEl = document.getElementById('detailBody');
+
+  typeEl.textContent = TYPE_LABELS[node.type] || node.type;
+  typeEl.style.color = TYPE_COLORS[node.type] || '#fff';
+
+  // Find connected nodes
+  const connected = edges
+    .filter(e => e.from === node.id || e.to === node.id)
+    .map(e => {
+      const otherId = e.from === node.id ? e.to : e.from;
+      const other = nodes.find(n => n.id === otherId);
+      return { node: other, edge: e };
+    })
+    .filter(c => c.node);
+
+  const connectedHTML = connected.length > 0
+    ? connected.map(c => `
+        <div class="connected-item" onclick="selectNode(nodes.find(n=>n.id==='${c.node.id}'))">
+          <div class="connected-dot" style="background:${TYPE_COLORS[c.node.type]}"></div>
+          <div>
+            <div style="font-size:10px;color:var(--muted2);font-family:var(--mono);letter-spacing:0.1em">${c.edge.label || '→'}</div>
+            <div style="font-size:12px">${c.node.label}</div>
+          </div>
+        </div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted2)">Keine Verbindungen</div>';
+
+  bodyEl.innerHTML = `
+    <div class="detail-title">${node.label}</div>
+    ${node.bereich ? `<div class="detail-section">
+      <div class="detail-section-label">Bereich</div>
+      <div class="detail-section-content">${node.bereich}</div>
+    </div>` : ''}
+    ${node.beschreibung ? `<div class="detail-section">
+      <div class="detail-section-label">Beschreibung</div>
+      <div class="detail-section-content">${node.beschreibung}</div>
+    </div>` : ''}
+    <div class="detail-section">
+      <div class="detail-section-label">Verbindungen (${connected.length})</div>
+      <div class="connected-list">${connectedHTML}</div>
+    </div>
+    <button onclick="deleteNode('${node.id}')" style="
+      margin-top:8px;
+      font-family:var(--mono);font-size:10px;
+      background:transparent;border:1px solid rgba(240,96,96,0.3);
+      color:rgba(240,96,96,0.7);padding:7px 12px;
+      border-radius:5px;cursor:pointer;letter-spacing:0.1em;
+    ">Knoten löschen</button>
+  `;
+
+  panel.classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+  selectedNode = null;
+  renderAll();
+}
+
+function deleteNode(id) {
+  nodes = nodes.filter(n => n.id !== id);
+  edges = edges.filter(e => e.from !== id && e.to !== id);
+  closeDetail();
+  renderAll();
+  saveState();
+}
+
+// ─── DRAG NODES ──────────────────────────────────────────────────────────────
+function startDrag(e, node) {
+  e.stopPropagation();
+  isDragging = false;
+  dragNode = node;
+  dragStart = { x: e.clientX, y: e.clientY };
+  dragNodeStart = { x: node.x, y: node.y };
+
+  const onMove = (ev) => {
+    const dx = ev.clientX - dragStart.x;
+    const dy = ev.clientY - dragStart.y;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) isDragging = true;
+    if (isDragging) {
+      dragNode.x = dragNodeStart.x + dx;
+      dragNode.y = dragNodeStart.y + dy;
+      const el = document.getElementById('el_' + dragNode.id);
+      if (el) {
+        el.style.left = (dragNode.x + panOffset.x) + 'px';
+        el.style.top = (dragNode.y + panOffset.y) + 'px';
+      }
+      renderEdges();
+    }
+  };
+
+  const onUp = () => {
+    if (isDragging) saveState();
+    isDragging = false;
+    dragNode = null;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  };
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+// ─── CANVAS PAN ──────────────────────────────────────────────────────────────
+document.getElementById('canvas').addEventListener('mousedown', (e) => {
+  if (e.target.closest('.node')) return;
+  isPanning = true;
+  panStart = { x: e.clientX - panOffset.x, y: e.clientY - panOffset.y };
+  document.getElementById('canvas').classList.add('grabbing');
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isPanning) return;
+  panOffset.x = e.clientX - panStart.x;
+  panOffset.y = e.clientY - panStart.y;
+  renderAll();
+});
+
+document.addEventListener('mouseup', () => {
+  isPanning = false;
+  document.getElementById('canvas').classList.remove('grabbing');
+});
+
+document.getElementById('canvas').addEventListener('click', (e) => {
+  if (!e.target.closest('.node') && !e.target.closest('.detail-panel')) {
+    closeDetail();
+  }
+});
+
+// ─── CLEAR ───────────────────────────────────────────────────────────────────
+async function clearMap() {
+  if (!confirm('Karte wirklich leeren? Alle Knoten werden gelöscht.')) return;
+  nodes = []; edges = []; nodeIdCounter = 0; selectedNode = null;
+  renderAll();
+  document.getElementById('canvasHint').style.display = 'flex';
+  document.getElementById('detailPanel').classList.remove('open');
+  try {
+    await window.storage.delete('bi-map-nodes');
+    await window.storage.delete('bi-map-edges');
+    await window.storage.delete('bi-map-counter');
+  } catch(e) {}
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+loadState();
+</script>
+</body>
+</html>

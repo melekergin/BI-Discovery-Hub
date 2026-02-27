@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAP Navigator · BI Discovery</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #080a0e;
+    --surface: #0f1218;
+    --surface2: #161c28;
+    --border: #1e2535;
+    --border2: #2a3348;
+    --text: #c8d4e8;
+    --muted: #4a5568;
+    --muted2: #64748b;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --pm: #f59e0b;
+    --fi: #3b82f6;
+    --hr: #10b981;
+    --accent: #6366f1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .mod-tabs {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .mod-tab {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 6px 14px;
+    border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--muted2);
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.15s;
+  }
+
+  .mod-tab.active-pm { background: rgba(245,158,11,0.15); color: var(--pm); border-color: rgba(245,158,11,0.4); }
+  .mod-tab.active-fi { background: rgba(59,130,246,0.15); color: var(--fi); border-color: rgba(59,130,246,0.4); }
+  .mod-tab.active-hr { background: rgba(16,185,129,0.15); color: var(--hr); border-color: rgba(16,185,129,0.4); }
+  .mod-tab:hover { color: var(--text); border-color: var(--muted2); }
+  .mod-tab.active-sql { background: rgba(236,72,153,0.15); color: #ec4899; border-color: rgba(236,72,153,0.4); }
+
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: calc(100vh - 53px);
+  }
+
+  /* LEFT */
+  .left-panel {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .left-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Search */
+  .search-wrap {
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 11px 14px 11px 38px;
+    border-radius: 7px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  /* Quick ask */
+  .quick-ask {
+    display: flex;
+    gap: 8px;
+  }
+
+  .quick-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .quick-input:focus { border-color: var(--accent); }
+  .quick-input::placeholder { color: var(--muted); font-size: 12px; }
+
+  .btn-ask {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .btn-ask:hover { opacity: 0.85; }
+  .btn-ask:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* Table cards */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+  }
+
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .table-card:hover { border-color: var(--border2); background: var(--surface2); }
+  .table-card.active { border-color: var(--accent); background: rgba(99,102,241,0.07); }
+
+  .table-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 100px;
+  }
+
+  .table-desc {
+    font-size: 12px;
+    color: var(--muted2);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .mod-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-pm { background: rgba(245,158,11,0.1); color: var(--pm); border-color: rgba(245,158,11,0.3); }
+  .badge-fi { background: rgba(59,130,246,0.1); color: var(--fi); border-color: rgba(59,130,246,0.3); }
+  .badge-hr { background: rgba(16,185,129,0.1); color: var(--hr); border-color: rgba(16,185,129,0.3); }
+
+  /* RIGHT */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .right-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+  .empty-icon { font-size: 36px; opacity: 0.25; }
+  .empty-state p { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; }
+
+  /* Detail blocks */
+  .detail-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    animation: fadeIn 0.25s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .detail-block-header {
+    padding: 9px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .detail-block-body {
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* Steps */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(99,102,241,0.12);
+    border: 1px solid rgba(99,102,241,0.3);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-content { flex: 1; }
+
+  .step-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+
+  .step-desc {
+    font-size: 12px;
+    color: var(--muted2);
+    line-height: 1.5;
+  }
+
+  .code-inline {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--text);
+  }
+
+  /* Transactions */
+  .tx-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .tx-item {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .tx-item:hover { border-color: var(--accent); }
+
+  .tx-code {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+
+  .tx-desc {
+    font-size: 11px;
+    color: var(--muted2);
+    line-height: 1.4;
+  }
+
+  /* Fields */
+  .field-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .field-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.1em;
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  .field-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .field-table tr:last-child td { border-bottom: none; }
+
+  .field-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--pm);
+  }
+
+  .field-desc { color: var(--text); }
+  .field-note { color: var(--muted2); font-size: 11px; }
+
+  /* Loading */
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    color: var(--muted2);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* SQL Panel */
+  .sql-panel {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    height: calc(100vh - 53px);
+  }
+  .sql-panel.visible { display: flex; }
+  .sql-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+  .sql-input-side {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .sql-body {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+  .sql-textarea {
+    flex: 1;
+    min-height: 260px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    padding: 14px;
+    border-radius: 7px;
+    outline: none;
+    resize: none;
+    transition: border-color 0.15s;
+  }
+  .sql-textarea:focus { border-color: #ec4899; }
+  .sql-textarea::placeholder { color: var(--muted); }
+  .btn-sql {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    background: #ec4899;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-sql:hover { opacity: 0.85; }
+  .btn-sql:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .sap-step {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .sap-step-header {
+    padding: 10px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .sap-step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: rgba(236,72,153,0.15);
+    color: #ec4899;
+    border: 1px solid rgba(236,72,153,0.3);
+  }
+  .sap-step-body {
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .sap-step-body .note {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted2);
+    font-family: var(--mono);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: 5px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SAP Navigator · BI Discovery</div>
+  <div class="mod-tabs">
+    <button class="mod-tab active-pm" onclick="filterModule('PM')">SAP PM</button>
+    <button class="mod-tab active-fi" onclick="filterModule('FI')">SAP FI/CO</button>
+    <button class="mod-tab active-hr" onclick="filterModule('HR')">SAP HR</button>
+    <button class="mod-tab" onclick="filterModule('ALL')" style="color:var(--muted2)">Alle</button>
+    <button class="mod-tab" id="sqlTabBtn" onclick="showSQLPanel()" style="color:#ec4899;border-color:rgba(236,72,153,0.3)">SQL → SAP ✦</button>
+  </div>
+</header>
+
+<div class="main" id="mainPanel">
+  <!-- LEFT: Table list + search -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <div class="dot" style="background:var(--accent)"></div>
+      Tabellen & Transaktionen
+    </div>
+    <div class="left-body">
+
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" id="searchInput" placeholder="Tabellenname oder Begriff suchen..." oninput="filterCards()">
+      </div>
+
+      <div class="quick-ask">
+        <input class="quick-input" id="quickInput" placeholder="Frage stellen: z.B. 'Was ist EQUI?' oder 'Wie prüfe ich Wartungsaufträge?'" onkeydown="if(event.key==='Enter')askAI()">
+        <button class="btn-ask" id="btnAsk" onclick="askAI()">Fragen →</button>
+      </div>
+
+      <div id="cardList"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Detail -->
+  <div class="right-panel">
+    <div class="panel-header">
+      <div class="dot" style="background:var(--accent)"></div>
+      Schritt-für-Schritt Anleitung
+    </div>
+    <div class="right-body" id="rightBody">
+      <div class="empty-state">
+        <div class="empty-icon">◈</div>
+        <p>Tabelle auswählen oder Frage stellen</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATIC DATA ─────────────────────────────────────────────────────────────
+const SAP_TABLES = [
+  // PM
+  { name: 'AUFK', module: 'PM', desc: 'Auftragsstammdaten – jeder Wartungsauftrag', key: 'Auftragsart, Status, Termine' },
+  { name: 'AFKO', module: 'PM', desc: 'Auftragskopf (Fertigungsaufträge/PM)', key: 'Termine, Mengen' },
+  { name: 'VIQMEL', module: 'PM', desc: 'Meldungen (Störmeldungen, Anforderungen)', key: 'Meldungsart, Status, Datum' },
+  { name: 'EQUI',  module: 'PM', desc: 'Equipmentstamm – alle Geräte/Anlagen', key: 'Gerät, Kostenstelle, Standort' },
+  { name: 'IFLOT', module: 'PM', desc: 'Funktionale Standorte (Gebäude, Räume)', key: 'Hierarchie, Standort' },
+  { name: 'AFVC',  module: 'PM', desc: 'Vorgänge zu Aufträgen (Arbeitspakete)', key: 'Tätigkeit, Dauer, Status' },
+  { name: 'AFRU',  module: 'PM', desc: 'Rückmeldungen – tatsächlich geleistete Arbeit', key: 'Ist-Stunden, Datum' },
+  { name: 'OBJK',  module: 'PM', desc: 'Objektverknüpfungen (Equipment zu Auftrag)', key: 'Verknüpfungsart' },
+
+  // FI/CO
+  { name: 'BKPF',  module: 'FI', desc: 'Buchhaltungsbelegkopf – jede Buchung', key: 'Belegnummer, Datum, Buchungskreis' },
+  { name: 'BSEG',  module: 'FI', desc: 'Buchhaltungsbelegsegment – Einzelpositionen', key: 'Betrag, Konto, Kostenstelle' },
+  { name: 'CSKS',  module: 'CO', desc: 'Kostenstellenstamm', key: 'Kostenstelle, Bereich' },
+  { name: 'COSS',  module: 'CO', desc: 'CO Sekundärkosten (Istkosten)', key: 'Kosten, Periode' },
+  { name: 'COSP',  module: 'CO', desc: 'CO Primärkosten (Istkosten)', key: 'Kosten, Kostenelement' },
+  { name: 'EKKO',  module: 'MM', desc: 'Einkaufsbelege Kopf', key: 'Bestellnummer, Lieferant' },
+  { name: 'EKPO',  module: 'MM', desc: 'Einkaufsbelege Position', key: 'Material, Menge, Preis' },
+
+  // HR
+  { name: 'PA0000', module: 'HR', desc: 'Personalmaßnahmen (Eintritt, Austritt)', key: 'Maßnahmenart, Datum' },
+  { name: 'PA0001', module: 'HR', desc: 'Organisatorische Zuordnung (Stelle, Abteilung)', key: 'Kostenstelle, Stelle' },
+  { name: 'PA0002', module: 'HR', desc: 'Personalien (Name, Geburtsdatum)', key: 'Name, Geschlecht' },
+  { name: 'PA0007', module: 'HR', desc: 'Arbeitszeitplan', key: 'Schichtplan, Stunden' },
+  { name: 'HRP1000',module: 'HR', desc: 'Objekte in der Org-Struktur', key: 'Org-Einheit, Stelle' },
+];
+
+const TRANSACTIONS = {
+  PM: [
+    { code: 'IW38', desc: 'Aufträge anzeigen / ändern (Liste)' },
+    { code: 'IW39', desc: 'Aufträge anzeigen (nur lesen)' },
+    { code: 'IW29', desc: 'Meldungen anzeigen' },
+    { code: 'IE03', desc: 'Equipment anzeigen' },
+    { code: 'IL03', desc: 'Funktionaler Standort anzeigen' },
+    { code: 'IW37N', desc: 'Vorgänge zu Aufträgen' },
+  ],
+  FI: [
+    { code: 'FBL3N', desc: 'Sachkonteneinzelposten anzeigen' },
+    { code: 'FBL1N', desc: 'Kreditorenposten anzeigen' },
+    { code: 'KSB1',  desc: 'Kostenstelleneinzelposten' },
+    { code: 'S_ALR_87013611', desc: 'Kostenstellenbericht' },
+  ],
+  HR: [
+    { code: 'PA20',  desc: 'Personalstamm anzeigen' },
+    { code: 'PA30',  desc: 'Personalstamm pflegen' },
+    { code: 'S_AHR_61016362', desc: 'Org-Struktur anzeigen' },
+  ],
+};
+
+let currentModule = 'ALL';
+let selectedTable = null;
+
+// ─── RENDER CARDS ─────────────────────────────────────────────────────────────
+function renderCards(tables) {
+  const list = document.getElementById('cardList');
+  if (!tables.length) {
+    list.innerHTML = `<div style="font-family:var(--mono);font-size:11px;color:var(--muted2);padding:12px 0;">Keine Treffer</div>`;
+    return;
+  }
+
+  const grouped = {};
+  tables.forEach(t => {
+    const mod = t.module;
+    if (!grouped[mod]) grouped[mod] = [];
+    grouped[mod].push(t);
+  });
+
+  const modOrder = ['PM', 'FI', 'CO', 'MM', 'HR'];
+  const modColors = { PM: 'pm', FI: 'fi', CO: 'fi', MM: 'fi', HR: 'hr' };
+
+  list.innerHTML = modOrder
+    .filter(m => grouped[m])
+    .map(m => `
+      <div style="margin-bottom:14px">
+        <div class="section-label" style="margin-bottom:8px">SAP ${m}</div>
+        ${grouped[m].map(t => `
+          <div class="table-card ${selectedTable?.name === t.name ? 'active' : ''}"
+               onclick="selectTable('${t.name}')"
+               style="margin-bottom:6px">
+            <span class="mod-badge badge-${modColors[m]}">${m}</span>
+            <div>
+              <div class="table-name">${t.name}</div>
+              <div class="table-desc">${t.desc}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+}
+
+function filterModule(mod) {
+  currentModule = mod;
+  filterCards();
+}
+
+function filterCards() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = SAP_TABLES;
+  if (currentModule !== 'ALL') {
+    filtered = filtered.filter(t => t.module === currentModule);
+  }
+  if (search) {
+    filtered = filtered.filter(t =>
+      t.name.toLowerCase().includes(search) ||
+      t.desc.toLowerCase().includes(search) ||
+      t.key.toLowerCase().includes(search)
+    );
+  }
+  renderCards(filtered);
+}
+
+// ─── SELECT TABLE ─────────────────────────────────────────────────────────────
+function selectTable(tableName) {
+  selectedTable = SAP_TABLES.find(t => t.name === tableName);
+  filterCards();
+  showTableDetail(selectedTable);
+}
+
+function showTableDetail(table) {
+  const mod = table.module;
+  const transactions = TRANSACTIONS[mod] || TRANSACTIONS['FI'];
+  const txHTML = transactions.map(tx => `
+    <div class="tx-item">
+      <div class="tx-code">${tx.code}</div>
+      <div class="tx-desc">${tx.desc}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('rightBody').innerHTML = `
+    <div class="detail-block">
+      <div class="detail-block-header">◈ ${table.name} — ${table.desc}</div>
+      <div class="detail-block-body">
+        <div style="font-size:12px;color:var(--muted2)">Wichtige Felder: <span style="color:var(--text)">${table.key}</span></div>
+      </div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-block-header">① So fragst du diese Tabelle in SAP ab</div>
+      <div class="detail-block-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-title">Transaktion SE16N öffnen</div>
+              <div class="step-desc">Im SAP Kommandofeld (oben links) <span class="code-inline">/nSE16N</span> eingeben und Enter drücken.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-title">Tabelle eingeben</div>
+              <div class="step-desc">Im Feld "Tabelle" den Namen <span class="code-inline">${table.name}</span> eingeben. Enter oder auf das Ausführen-Symbol klicken.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-title">Filter setzen</div>
+              <div class="step-desc">Felder wie Datum, Buchungskreis oder Auftragsnummer einschränken. Maximal 500 Zeilen anfordern um das System nicht zu überlasten.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-title">Ausführen</div>
+              <div class="step-desc">F8 drücken oder auf "Ausführen" klicken. Du siehst jetzt die Rohdaten — genau das was ins BI fließt.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-block-header">② Passende Transaktionen für ${mod}</div>
+      <div class="detail-block-body">
+        <div class="tx-grid">${txHTML}</div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted2)">
+          Tipp: Transaktion im Kommandofeld eingeben, z.B. <span class="code-inline">/nIW38</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-block-header">③ BI vs SAP Vergleich — Schritt für Schritt</div>
+      <div class="detail-block-body">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-title">BI-Wert notieren</div>
+              <div class="step-desc">Aus dem BI-Bericht den konkreten Wert notieren — mit Datum, Filter und Einheit. Zum Beispiel: "Offene Aufträge am 01.02.2026 = 42"</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-title">Gleiche Filter in SAP setzen</div>
+              <div class="step-desc">SE16N oder Transaktion öffnen. Exakt dieselben Filter setzen: gleicher Zeitraum, gleicher Buchungskreis, gleiche Statusbedingung.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-title">Zeilen zählen / summieren</div>
+              <div class="step-desc">In SE16N: unten links steht die Anzahl Zeilen. Bei Beträgen: Spalte markieren → rechte Maustaste → "Summe".</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-title">Vergleichen</div>
+              <div class="step-desc">Stimmt der Wert? Wenn nicht: Was filtert das BI zusätzlich? Welche Statuswerte werden ausgeschlossen? Das ist die Frage für den nächsten Schritt.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="askAboutTable('${table.name}')" style="
+      font-family:var(--mono);font-size:11px;letter-spacing:0.1em;
+      background:rgba(99,102,241,0.15);color:#a5b4fc;
+      border:1px solid rgba(99,102,241,0.3);
+      padding:10px 16px;border-radius:6px;cursor:pointer;
+      transition:all 0.15s;width:100%;
+    ">AI fragen: Was genau steckt in ${table.name}? →</button>
+  `;
+}
+
+// ─── AI QUESTION ──────────────────────────────────────────────────────────────
+async function askAboutTable(tableName) {
+  const table = SAP_TABLES.find(t => t.name === tableName);
+  await askAIWithPrompt(`Erkläre mir die SAP-Tabelle ${tableName} (${table?.desc}) im Kontext eines Krankenhauses. Was bedeuten die wichtigsten Felder? Welche Fallstricke gibt es beim BI-Abgleich? Kurz und praktisch.`);
+}
+
+async function askAI() {
+  const q = document.getElementById('quickInput').value.trim();
+  if (!q) return;
+  await askAIWithPrompt(q);
+  document.getElementById('quickInput').value = '';
+}
+
+async function askAIWithPrompt(question) {
+  const btn = document.getElementById('btnAsk');
+  btn.disabled = true;
+
+  document.getElementById('rightBody').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>AI antwortet...</span>
+    </div>`;
+
+  const prompt = `Du bist SAP-Experte und BI-Analyst in einem Krankenhaus (Deutschland).
+Beantworte folgende Frage kurz, praktisch und auf Deutsch. Kein Fachjargon ohne Erklärung.
+Kontext: Das System hat SAP PM (Instandhaltung/Medizintechnik), FI/CO (Finanzen), HR (Personal).
+Der Nutzer ist BI-Entwickler, kein SAP-Berater.
+
+FRAGE: ${question}
+
+Antworte NUR als valides JSON:
+{
+  "antwort": "Direkte Antwort in 3-5 Sätzen",
+  "schritte": ["Schritt 1", "Schritt 2"],
+  "wichtig": "Ein konkreter Tipp oder Fallstrick",
+  "transaktionen": ["TX1", "TX2"]
+}
+Leere Arrays wenn nicht relevant.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const r = JSON.parse(clean);
+
+    const stepsHTML = r.schritte?.length ? `
+      <div class="detail-block">
+        <div class="detail-block-header">Schritte</div>
+        <div class="detail-block-body">
+          <div class="steps">
+            ${r.schritte.map((s, i) => `
+              <div class="step">
+                <div class="step-num">${i+1}</div>
+                <div class="step-content"><div class="step-desc">${s}</div></div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>` : '';
+
+    const txHTML = r.transaktionen?.length ? `
+      <div class="detail-block">
+        <div class="detail-block-header">Transaktionen</div>
+        <div class="detail-block-body">
+          <div class="tx-grid">
+            ${r.transaktionen.map(tx => `
+              <div class="tx-item"><div class="tx-code">${tx}</div></div>`).join('')}
+          </div>
+        </div>
+      </div>` : '';
+
+    document.getElementById('rightBody').innerHTML = `
+      <div class="detail-block">
+        <div class="detail-block-header">◈ Antwort</div>
+        <div class="detail-block-body" style="font-size:14px;line-height:1.8">${r.antwort}</div>
+      </div>
+      ${stepsHTML}
+      ${r.wichtig ? `<div class="detail-block">
+        <div class="detail-block-header">⚠ Wichtig</div>
+        <div class="detail-block-body" style="color:var(--pm)">${r.wichtig}</div>
+      </div>` : ''}
+      ${txHTML}
+    `;
+
+  } catch(e) {
+    document.getElementById('rightBody').innerHTML =
+      `<div style="color:#f06060;font-family:var(--mono);font-size:12px;padding:20px;">Fehler: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderCards(SAP_TABLES);
+
+// ─── SQL → SAP PANEL ──────────────────────────────────────────────────────────
+function showSQLPanel() {
+  document.getElementById('mainPanel').style.display = 'none';
+  document.getElementById('sqlPanel').style.display = 'flex';
+  document.getElementById('sqlPanel').style.flexDirection = 'column';
+  document.getElementById('sqlPanel').style.flex = '1';
+  document.getElementById('sqlTabBtn').classList.add('active-sql');
+}
+
+function showMainPanel() {
+  document.getElementById('mainPanel').style.display = 'grid';
+  document.getElementById('sqlPanel').style.display = 'none';
+  document.getElementById('sqlTabBtn').classList.remove('active-sql');
+}
+
+// Override filterModule to also hide sql panel
+const _origFilter = filterModule;
+function filterModule(mod) {
+  showMainPanel();
+  _origFilter(mod);
+}
+
+async function analyzeSQLtoSAP() {
+  const sql = document.getElementById('sqlInput2').value.trim();
+  const context = document.getElementById('sqlContext').value.trim();
+  if (!sql) { alert('Bitte SQL einfügen.'); return; }
+
+  const btn = document.getElementById('btnSqlAnalyze');
+  btn.disabled = true;
+  btn.textContent = 'Analysiere...';
+
+  document.getElementById('sqlOutputBody').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>SAP Prüfanleitung wird generiert...</span>
+    </div>`;
+
+  const prompt = `Du bist SAP-Experte und BI-Analyst in einem Krankenhaus (Deutschland).
+Der Nutzer hat eine SQL-Abfrage aus dem BI-System (MSBI/SQL Server). 
+Erkläre Schritt für Schritt wie man DENSELBEN Wert direkt in SAP prüfen kann.
+Der Nutzer ist kein SAP-Berater – sei idiotensicher, konkret, keine Annahmen.
+SAP-Module vorhanden: PM (Instandhaltung), FI/CO (Finanzen), HR (Personal).
+
+${context ? `KONTEXT: ${context}` : ''}
+SQL:
+${sql.substring(0, 2000)}
+
+Antworte NUR als valides JSON:
+{
+  "was_berechnet": "Was berechnet diese SQL in 1-2 Sätzen?",
+  "sap_tabellen": ["Tabelle1", "Tabelle2"],
+  "schritte": [
+    {
+      "titel": "Kurzer Schritttitel",
+      "transaktion": "z.B. SE16N oder IW38 (leer wenn kein spez. TX)",
+      "anleitung": "Genaue Schritt-für-Schritt Anweisung was der Nutzer klicken/eingeben soll",
+      "filter": "Welche Filter genau setzen? Feldname = Wert",
+      "erwartetes_ergebnis": "Was soll der Nutzer sehen wenn es stimmt?"
+    }
+  ],
+  "vergleich_tipp": "Wie genau vergleicht man den BI-Wert mit dem SAP-Ergebnis? Was kann abweichen?",
+  "fallstricke": ["Möglicher Fallstrick 1", "Fallstrick 2"]
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const r = JSON.parse(clean);
+
+    const tabBadges = (r.sap_tabellen || []).map(t =>
+      `<span class="code-inline" style="margin-right:5px">${t}</span>`
+    ).join('');
+
+    const stepsHTML = (r.schritte || []).map((s, i) => `
+      <div class="sap-step">
+        <div class="sap-step-header">
+          <div class="sap-step-num">${i+1}</div>
+          <div>${s.titel}${s.transaktion ? ` <span class="code-inline" style="font-size:11px;margin-left:6px">${s.transaktion}</span>` : ''}</div>
+        </div>
+        <div class="sap-step-body">
+          <div>${s.anleitung}</div>
+          ${s.filter ? `<div class="note">🔍 Filter: ${s.filter}</div>` : ''}
+          ${s.erwartetes_ergebnis ? `<div class="note" style="border-color:rgba(16,185,129,0.3);color:var(--hr)">✓ Erwartetes Ergebnis: ${s.erwartetes_ergebnis}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    const fallstrickeHTML = (r.fallstricke || []).map(f =>
+      `<div style="padding:8px 10px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:5px;font-size:12px;margin-bottom:6px;color:var(--pm)">⚠ ${f}</div>`
+    ).join('');
+
+    document.getElementById('sqlOutputBody').innerHTML = `
+      <div class="detail-block">
+        <div class="detail-block-header">◈ Was berechnet diese Abfrage</div>
+        <div class="detail-block-body">
+          <div style="font-size:14px;line-height:1.8;margin-bottom:10px">${r.was_berechnet}</div>
+          <div>SAP Tabellen: ${tabBadges || '—'}</div>
+        </div>
+      </div>
+
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:0.12em;text-transform:uppercase;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:12px;">
+        Schritt-für-Schritt in SAP prüfen
+      </div>
+
+      ${stepsHTML}
+
+      ${r.vergleich_tipp ? `<div class="detail-block">
+        <div class="detail-block-header">↔ Vergleich BI vs SAP</div>
+        <div class="detail-block-body">${r.vergleich_tipp}</div>
+      </div>` : ''}
+
+      ${fallstrickeHTML ? `<div class="detail-block">
+        <div class="detail-block-header">⚠ Mögliche Fallstricke</div>
+        <div class="detail-block-body">${fallstrickeHTML}</div>
+      </div>` : ''}
+    `;
+
+  } catch(e) {
+    document.getElementById('sqlOutputBody').innerHTML =
+      `<div style="color:#f06060;font-family:var(--mono);font-size:12px;padding:20px;">Fehler: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'In SAP prüfen – Anleitung generieren →';
+}
+</script>
+
+<!-- SQL → SAP PANEL -->
+<div id="sqlPanel" style="display:none;flex:1;flex-direction:column;height:calc(100vh - 53px);">
+  <div style="display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;height:100%;">
+    <!-- Left: SQL Input -->
+    <div style="display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;">
+      <div class="panel-header">
+        <div class="dot" style="background:#ec4899"></div>
+        SQL Abfrage eingeben
+      </div>
+      <div class="sql-body">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted2);line-height:1.7;">
+          SQL aus dem BI einfügen → AI erklärt Schritt für Schritt wie du denselben Wert in SAP prüfen kannst.
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <label style="font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:0.12em;text-transform:uppercase;">Kontext (optional)</label>
+          <input id="sqlContext" type="text" placeholder="z.B. KPI: Offene Wartungsaufträge, Bereich: Medizintechnik"
+            style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:6px;outline:none;width:100%;transition:border-color 0.15s;"
+            onfocus="this.style.borderColor='#ec4899'" onblur="this.style.borderColor='var(--border2)'">
+        </div>
+        <textarea class="sql-textarea" id="sqlInput2"
+          placeholder="SELECT COUNT(*)&#10;FROM AUFK&#10;WHERE AUART = 'PM01'&#10;  AND IDAT2 >= '20260101'&#10;&#10;-- SQL hier einfügen..."></textarea>
+        <button class="btn-sql" id="btnSqlAnalyze" onclick="analyzeSQLtoSAP()">
+          In SAP prüfen – Anleitung generieren →
+        </button>
+      </div>
+    </div>
+    <!-- Right: Output -->
+    <div style="display:flex;flex-direction:column;overflow:hidden;">
+      <div class="panel-header">
+        <div class="dot" style="background:#ec4899"></div>
+        SAP Prüfanleitung
+      </div>
+      <div class="right-body" id="sqlOutputBody" style="flex:1;overflow-y:auto;padding:20px;">
+        <div class="empty-state">
+          <div class="empty-icon">◈</div>
+          <p>SQL einfügen und Anleitung generieren</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

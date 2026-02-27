@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protokoll · BI Discovery</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #080a0e;
+    --surface: #0f1218;
+    --surface2: #161c28;
+    --border: #1e2535;
+    --border2: #2a3348;
+    --text: #c8d4e8;
+    --muted: #4a5568;
+    --muted2: #64748b;
+    --accent: #3b82f6;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --purple: #8b5cf6;
+    --pink: #ec4899;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 400;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.1em;
+  }
+
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: calc(100vh - 53px);
+  }
+
+  /* LEFT – INPUT */
+  .input-panel {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .input-body {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    font-family: var(--sans);
+    font-size: 13px;
+  }
+
+  input, select { padding: 9px 12px; }
+  select { cursor: pointer; }
+  select option { background: var(--surface2); }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  textarea {
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    resize: none;
+    flex: 1;
+    min-height: 280px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-primary {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 11px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-sec {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: transparent;
+    color: var(--muted2);
+    border: 1px solid var(--border2);
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-sec:hover { color: var(--text); border-color: var(--muted2); }
+
+  /* RIGHT – OUTPUT */
+  .output-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .output-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  .empty-icon { font-size: 36px; opacity: 0.3; }
+
+  .empty-state p {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Result cards */
+  .result-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-section-header {
+    padding: 9px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-section-body {
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* Tags */
+  .tag-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+
+  .tag-kpi { background: rgba(16,185,129,0.1); color: var(--green); border-color: rgba(16,185,129,0.3); }
+  .tag-prozess { background: rgba(139,92,246,0.1); color: var(--purple); border-color: rgba(139,92,246,0.3); }
+  .tag-tabelle { background: rgba(245,158,11,0.1); color: var(--yellow); border-color: rgba(245,158,11,0.3); }
+  .tag-begriff { background: rgba(59,130,246,0.1); color: var(--accent); border-color: rgba(59,130,246,0.3); }
+  .tag-person { background: rgba(236,72,153,0.1); color: var(--pink); border-color: rgba(236,72,153,0.3); }
+
+  /* Questions */
+  .q-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .q-item {
+    display: flex;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border-left: 3px solid var(--yellow);
+    font-size: 13px;
+    line-height: 1.5;
+    align-items: flex-start;
+  }
+
+  .q-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--yellow);
+    min-width: 18px;
+    padding-top: 2px;
+  }
+
+  /* Conflicts */
+  .conflict-item {
+    padding: 9px 12px;
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+
+  /* Summary */
+  .summary-text {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  /* Export bar */
+  .export-bar {
+    padding: 11px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .export-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.1em;
+    margin-right: auto;
+  }
+
+  .btn-export {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: var(--surface2);
+    color: var(--muted2);
+    border: 1px solid var(--border2);
+    padding: 7px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.08em;
+  }
+  .btn-export:hover { color: var(--text); border-color: var(--accent); }
+
+  /* Loading */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 40px;
+    color: var(--muted2);
+  }
+
+  .spinner {
+    width: 26px; height: 26px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading p {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* History sidebar trigger */
+  .history-btn {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    background: transparent;
+    color: var(--muted2);
+    border: 1px solid var(--border2);
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    transition: all 0.15s;
+  }
+  .history-btn:hover { color: var(--text); border-color: var(--muted2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Protokoll · BI Discovery</div>
+  <div class="subtitle">Termin-Aufbereitung</div>
+  <button class="history-btn" onclick="showHistory()">↓ Verlauf</button>
+</header>
+
+<div class="main">
+  <!-- INPUT -->
+  <div class="input-panel">
+    <div class="panel-header">
+      <div class="dot" style="background:var(--accent)"></div>
+      Termin-Notizen
+    </div>
+    <div class="input-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fachbereich</label>
+          <select id="bereich">
+            <option value="">— wählen —</option>
+            <option>Medizintechnik</option>
+            <option>Klinische Dienste</option>
+            <option>Infrastruktur</option>
+            <option>Finanzen / Buchhaltung</option>
+            <option>Einkauf</option>
+            <option>Personal / HR</option>
+            <option>Medizinischer Dienst</option>
+            <option>AEMP</option>
+            <option>Projektmanagement</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="datum">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Teilnehmer (optional)</label>
+        <input type="text" id="teilnehmer" placeholder="z.B. Herr Müller (Controlling), Fr. Schmidt...">
+      </div>
+
+      <div class="form-group" style="flex:1;display:flex;flex-direction:column;">
+        <label>Notizen / Protokoll</label>
+        <textarea id="notizen" placeholder="Einfach alles reinschreiben wie es kommt.&#10;&#10;Stichworte, Sätze, phonetisch geschriebene Begriffe – alles ist okay.&#10;&#10;Beispiel:&#10;- Belegungsrate wird täglich geprüft&#10;- Unterschied zwischen geplant und tatsächlich unklar&#10;- SAP PM Aufträge, irgendwas mit IW38?&#10;- Controlling sieht andere Zahlen als Werkstatt"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="analyzeBtn" onclick="analyze()">Aufbereiten →</button>
+        <button class="btn-sec" onclick="clear()">Leeren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-panel">
+    <div class="panel-header">
+      <div class="dot" style="background:var(--green)"></div>
+      Strukturiertes Ergebnis
+    </div>
+
+    <div class="output-body" id="outputBody">
+      <div class="empty-state">
+        <div class="empty-icon">◈</div>
+        <p>Notizen einfügen und aufbereiten</p>
+      </div>
+    </div>
+
+    <div class="export-bar" id="exportBar" style="display:none">
+      <span class="export-label">Export</span>
+      <button class="btn-export" onclick="exportMarkdown()">↓ Markdown</button>
+      <button class="btn-export" onclick="copyText()">⎘ Kopieren</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let lastResult = null;
+
+// Set today's date
+document.getElementById('datum').value = new Date().toISOString().split('T')[0];
+
+async function analyze() {
+  const notizen = document.getElementById('notizen').value.trim();
+  const bereich = document.getElementById('bereich').value;
+  const datum = document.getElementById('datum').value;
+  const teilnehmer = document.getElementById('teilnehmer').value.trim();
+
+  if (!notizen) { alert('Bitte Notizen einfügen.'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Aufbereite...';
+
+  document.getElementById('outputBody').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Protokoll wird analysiert...</p>
+    </div>`;
+  document.getElementById('exportBar').style.display = 'none';
+
+  const prompt = `Du bist BI-Analyst und Protokollant in einem Krankenhaus.
+Analysiere diese Termin-Notizen und strukturiere sie.
+Antworte NUR als valides JSON. Kein Markdown, kein Text davor/danach.
+
+BEREICH: ${bereich || 'Unbekannt'}
+DATUM: ${datum}
+TEILNEHMER: ${teilnehmer || 'nicht angegeben'}
+NOTIZEN:
+${notizen}
+
+Antworte mit diesem JSON:
+{
+  "zusammenfassung": "2-3 Sätze: Was war das Hauptthema des Termins? Was sind die wichtigsten Erkenntnisse?",
+  "erkannte_begriffe": {
+    "kpis": ["KPI oder Kennzahl 1", "..."],
+    "prozesse": ["Prozess 1", "..."],
+    "tabellen_systeme": ["SAP-Tabelle oder System 1", "..."],
+    "fachbegriffe": ["unbekannter Begriff 1", "..."],
+    "personen_rollen": ["Rolle oder Person 1", "..."]
+  },
+  "offene_fragen": [
+    "Präzise Frage die ich beim nächsten Termin stellen muss",
+    "..."
+  ],
+  "unklare_begriffe": [
+    {"begriff": "phonetisch geschriebener Begriff", "vermutung": "könnte bedeuten..."}
+  ],
+  "naechste_schritte": ["Schritt 1", "..."],
+  "konflikte_auffaelligkeiten": ["Auffälligkeit oder Widerspruch 1", "..."]
+}
+
+Regeln: Maximal 5 offene Fragen. Maximal 4 nächste Schritte. Wenn ein Begriff unklar ist, mach eine vernünftige Annahme basierend auf Krankenhaus-Kontext. Leere Arrays wenn nichts gefunden.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    lastResult = { bereich, datum, teilnehmer, notizen, result };
+    await saveToHistory(lastResult);
+    renderResult(result, bereich, datum);
+
+  } catch(e) {
+    document.getElementById('outputBody').innerHTML =
+      `<div style="color:#f06060;font-family:var(--mono);font-size:12px;padding:20px;">Fehler: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Aufbereiten →';
+}
+
+function renderResult(r, bereich, datum) {
+  const b = r.erkannte_begriffe || {};
+
+  const tagSection = (items, cls, label) => items && items.length > 0
+    ? items.map(i => `<span class="tag ${cls}">${i}</span>`).join('')
+    : '';
+
+  const allTags = [
+    tagSection(b.kpis, 'tag-kpi', 'KPI'),
+    tagSection(b.prozesse, 'tag-prozess', 'Prozess'),
+    tagSection(b.tabellen_systeme, 'tag-tabelle', 'Tabelle/System'),
+    tagSection(b.fachbegriffe, 'tag-begriff', 'Begriff'),
+    tagSection(b.personen_rollen, 'tag-person', 'Person/Rolle')
+  ].join('');
+
+  const fragen = (r.offene_fragen || []).map((q, i) =>
+    `<div class="q-item"><span class="q-num">F${i+1}</span><span>${q}</span></div>`
+  ).join('');
+
+  const schritte = (r.naechste_schritte || []).map((s, i) =>
+    `<div class="q-item" style="border-left-color:var(--green)">
+      <span class="q-num" style="color:var(--green)">${i+1}</span><span>${s}</span>
+    </div>`
+  ).join('');
+
+  const unklar = (r.unklare_begriffe || []).map(u =>
+    `<div class="conflict-item">
+      <span style="font-family:var(--mono);color:var(--yellow)">${u.begriff}</span>
+      <span style="color:var(--muted2);font-size:12px"> → ${u.vermutung}</span>
+    </div>`
+  ).join('');
+
+  const konflikte = (r.konflikte_auffaelligkeiten || []).map(k =>
+    `<div class="conflict-item">${k}</div>`
+  ).join('');
+
+  document.getElementById('outputBody').innerHTML = `
+    <div class="result-section">
+      <div class="result-section-header">
+        <span>◈</span> Zusammenfassung · ${bereich || ''} · ${datum || ''}
+      </div>
+      <div class="result-section-body">
+        <div class="summary-text">${r.zusammenfassung || '—'}</div>
+      </div>
+    </div>
+
+    ${allTags ? `<div class="result-section">
+      <div class="result-section-header"><span>◎</span> Erkannte Begriffe & Konzepte</div>
+      <div class="result-section-body">
+        <div class="tag-grid">${allTags}</div>
+      </div>
+    </div>` : ''}
+
+    ${unklar ? `<div class="result-section">
+      <div class="result-section-header"><span>?</span> Unklare Begriffe</div>
+      <div class="result-section-body">${unklar}</div>
+    </div>` : ''}
+
+    ${fragen ? `<div class="result-section">
+      <div class="result-section-header"><span>→</span> Offene Fragen für nächsten Termin</div>
+      <div class="result-section-body"><div class="q-list">${fragen}</div></div>
+    </div>` : ''}
+
+    ${schritte ? `<div class="result-section">
+      <div class="result-section-header"><span>✓</span> Nächste Schritte</div>
+      <div class="result-section-body"><div class="q-list">${schritte}</div></div>
+    </div>` : ''}
+
+    ${konflikte ? `<div class="result-section">
+      <div class="result-section-header"><span>⚠</span> Auffälligkeiten</div>
+      <div class="result-section-body">${konflikte}</div>
+    </div>` : ''}
+  `;
+
+  document.getElementById('exportBar').style.display = 'flex';
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+async function saveToHistory(entry) {
+  try {
+    const existing = await window.storage.get('protokoll-history');
+    const history = existing ? JSON.parse(existing.value) : [];
+    history.unshift({ ...entry, savedAt: new Date().toISOString() });
+    const trimmed = history.slice(0, 20); // keep last 20
+    await window.storage.set('protokoll-history', JSON.stringify(trimmed));
+  } catch(e) {}
+}
+
+async function showHistory() {
+  try {
+    const existing = await window.storage.get('protokoll-history');
+    if (!existing) { alert('Noch kein Verlauf gespeichert.'); return; }
+    const history = JSON.parse(existing.value);
+    if (!history.length) { alert('Noch kein Verlauf gespeichert.'); return; }
+
+    const list = history.map((h, i) =>
+      `${i+1}. ${h.datum || '?'} · ${h.bereich || 'Unbekannt'}`
+    ).join('\n');
+
+    const choice = prompt(`Gespeicherte Protokolle:\n\n${list}\n\nNummer eingeben zum Laden:`);
+    const idx = parseInt(choice) - 1;
+    if (idx >= 0 && idx < history.length) {
+      const h = history[idx];
+      document.getElementById('bereich').value = h.bereich || '';
+      document.getElementById('datum').value = h.datum || '';
+      document.getElementById('teilnehmer').value = h.teilnehmer || '';
+      document.getElementById('notizen').value = h.notizen || '';
+      lastResult = h;
+      renderResult(h.result, h.bereich, h.datum);
+      document.getElementById('exportBar').style.display = 'flex';
+    }
+  } catch(e) {}
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+function exportMarkdown() {
+  if (!lastResult) return;
+  const { bereich, datum, teilnehmer, result: r } = lastResult;
+  const b = r.erkannte_begriffe || {};
+
+  const md = `# Protokoll: ${bereich || 'Unbekannt'} · ${datum || ''}
+${teilnehmer ? `**Teilnehmer:** ${teilnehmer}` : ''}
+
+## Zusammenfassung
+${r.zusammenfassung || '—'}
+
+## Erkannte Begriffe
+**KPIs:** ${(b.kpis || []).join(', ') || '—'}
+**Prozesse:** ${(b.prozesse || []).join(', ') || '—'}
+**Tabellen / Systeme:** ${(b.tabellen_systeme || []).join(', ') || '—'}
+**Fachbegriffe:** ${(b.fachbegriffe || []).join(', ') || '—'}
+
+${r.unklare_begriffe?.length ? `## Unklare Begriffe
+${r.unklare_begriffe.map(u => `- **${u.begriff}** → ${u.vermutung}`).join('\n')}
+` : ''}
+## Offene Fragen
+${(r.offene_fragen || []).map((q, i) => `${i+1}. ${q}`).join('\n') || '—'}
+
+## Nächste Schritte
+${(r.naechste_schritte || []).map((s, i) => `- [ ] ${s}`).join('\n') || '—'}
+
+${r.konflikte_auffaelligkeiten?.length ? `## Auffälligkeiten
+${r.konflikte_auffaelligkeiten.map(k => `- ${k}`).join('\n')}` : ''}
+`;
+
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `protokoll-${(bereich||'unbekannt').toLowerCase().replace(/\s\/\s/g,'-').replace(/\s/g,'-')}-${datum||'datum'}.md`;
+  a.click();
+}
+
+function copyText() {
+  if (!lastResult) return;
+  const r = lastResult.result;
+  const b = r.erkannte_begriffe || {};
+  const text = [
+    r.zusammenfassung,
+    '\nKPIs: ' + (b.kpis||[]).join(', '),
+    'Offene Fragen:\n' + (r.offene_fragen||[]).map((q,i)=>`${i+1}. ${q}`).join('\n'),
+    'Nächste Schritte:\n' + (r.naechste_schritte||[]).map(s=>`- ${s}`).join('\n')
+  ].join('\n');
+  navigator.clipboard.writeText(text);
+}
+
+function clear() {
+  document.getElementById('notizen').value = '';
+  document.getElementById('teilnehmer').value = '';
+  document.getElementById('bereich').value = '';
+  document.getElementById('outputBody').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">◈</div>
+      <p>Notizen einfügen und aufbereiten</p>
+    </div>`;
+  document.getElementById('exportBar').style.display = 'none';
+  lastResult = null;
+}
+</script>
+</body>
+</html>
